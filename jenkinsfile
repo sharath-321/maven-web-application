@@ -11,7 +11,6 @@ echo "Job Name is: ${env.JOB_NAME}"
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
 
 try{
-
 stage('CheckOutCode'){
 git branch: 'development', credentialsId: 'f2d9a3aa-c06c-49be-959b-35d389c7b545', url: 'https://github.com/sharath-321/maven-web-application.git'
 }
@@ -20,7 +19,7 @@ stage ('Build'){
 sh "${mavenHome}/bin/mvn clean package"
 }
 
-/*
+
 
 stage ('ExecuteSonarQubeReport'){
 sh "${mavenHome}/bin/mvn clean sonar:sonar"
@@ -36,15 +35,13 @@ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@17
 }
 }
 
-*/
+
 
 }//try block closed
-
 catch (e){
 skackNotifications(currentBuild.result)
 throw e
 }
-
 finally {
 skackNotifications(currentBuild.result)
 }
@@ -56,7 +53,7 @@ skackNotifications(currentBuild.result)
 
 def slackNotifications(String buildStatus = 'STARTED') {
   // build status of null means successful
-  buildStatus =  buildStatus ?: 'SUCCESSFUL'
+  buildStatus =  buildStatus ?: 'SUCCESS'
 
   // Default values
   def colorName = 'RED'
@@ -68,7 +65,7 @@ def slackNotifications(String buildStatus = 'STARTED') {
   if (buildStatus == 'STARTED') {
     color = 'YELLOW'
     colorCode = '#FFFF00'
-  } else if (buildStatus == 'SUCCESSFUL') {
+  } else if (buildStatus == 'SUCCESS') {
     color = 'GREEN'
     colorCode = '#00FF00'
   } else {
