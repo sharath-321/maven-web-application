@@ -42,7 +42,7 @@ catch (e){
 skackNotifications(currentBuild.result)
 throw e
 }
-finally {
+finally{
 skackNotifications(currentBuild.result)
 }
 
