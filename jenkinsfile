@@ -1,17 +1,11 @@
-
-
-
 node{
 
 def mavenHome = tool name: "maven3.8.6"
 
-echo "jenkins url is: ${env.JENKINS_URL}"
-echo "Node Name is: ${env.NODE_NAME}"
-echo "Job Name is: ${env.JOB_NAME}"
-
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
 
 try{
+
 stage('CheckOutCode'){
 git branch: 'development', credentialsId: 'f2d9a3aa-c06c-49be-959b-35d389c7b545', url: 'https://github.com/sharath-321/maven-web-application.git'
 }
@@ -19,8 +13,6 @@ git branch: 'development', credentialsId: 'f2d9a3aa-c06c-49be-959b-35d389c7b545'
 stage ('Build'){
 sh "${mavenHome}/bin/mvn clean package"
 }
-
-
 
 stage ('ExecuteSonarQubeReport'){
 sh "${mavenHome}/bin/mvn clean sonar:sonar"
@@ -36,15 +28,15 @@ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@17
 }
 }
 
-
-
 }//try block closed
+
 catch (e){
-skackNotifications(currentBuild.result)
+slackNotifications(currentBuild.result)
 throw e
 }
+
 finally{
-skackNotifications(currentBuild.result)
+slackNotifications(currentBuild.result)
 }
 
 }//node closed
@@ -77,4 +69,3 @@ def slackNotifications(String buildStatus = 'STARTED') {
   // Send notifications
   slackSend (color: colorCode, message: summary)
 }
-
