@@ -1,59 +1,66 @@
 
 
+
 node{
 
 def mavenHome = tool name: "maven3.8.6"
 
-echo "jenkins url is: ${env.JENKINS_URL}"
+echo "Jenkins url is: ${env.JENKINS_URL}"
 echo "Node Name is: ${env.NODE_NAME}"
-echo "Job Name is: ${env.JOB_NAME}"
+echo "Job name is: ${env.JOB_NAME}"
 
-properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('* * * * *')])])
+
+
+
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '5', daysToKeepStr: '', numToKeepStr: '5')), [$class: 'JobLocalConfiguration', changeReasonComment: ''], pipelineTriggers([pollSCM('* * * * *')])])
+
 
 try{
+
+slackNotifications('STARTED')
+
 stage('CheckOutCode'){
-git branch: 'development', credentialsId: 'f2d9a3aa-c06c-49be-959b-35d389c7b545', url: 'https://github.com/sharath-321/maven-web-application.git'
+git branch: 'development', credentialsId: '166c70a2-1df5-4993-a566-0a795862da8c', url: 'https://github.com/MithunTechnologiesDevOps/maven-web-application.git'
 }
 
-stage ('Build'){
+stage('Build'){
 sh "${mavenHome}/bin/mvn clean package"
 }
 
-
-
-stage ('ExecuteSonarQubeReport'){
+/*
+stage('ExecuteSonarQubeReport'){
 sh "${mavenHome}/bin/mvn clean sonar:sonar"
 }
 
-stage ('UpdateArtifactIntoArtifactoryRepo'){
-sh "${mavenHome}/bin/mvn clean deploy"
+stage('UploadArtifcatsIntoArtifactoryRepo'){
+sh "${mavenHome}/bin/mvn clean deploy2"
 }
 
-stage ('DeployAppIntoTomcatServer'){
-sshagent(['fe804afb-4d56-4726-8356-38eeb0b470cd']) {
-sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@172.31.35.17:/opt/apache-tomcat-9.0.65/webapps/"
+stage('DeployAppIntoTomcatServer'){
+sshagent(['dc292b7a-3b39-4630-9fc3-1b806b54412c']) {
+ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war  ec2-user@172.31.7.80:/opt/apache-tomcat-9.0.65/webapps/"
 }
 }
+*/
 
-
-
-}//try block closed
+}//try block closing
 catch (e){
-skackNotifications(currentBuild.result)
+slackNotifications('FAILED')
 throw e
 }
 finally{
-skackNotifications(currentBuild.result)
+slackNotifications(currentBuild.result)
 }
 
-}//node closed
 
-//code snippet for sending slack notification
+}//Node closing
 
+//Code Snippet for sending slack notifications.
 
 def slackNotifications(String buildStatus = 'STARTED') {
   // build status of null means successful
-  buildStatus =  buildStatus ?: 'SUCCESS'
+  //buildStatus =  buildStatus ?: 'SUCCESS'
+  buildStatus = buildStatus ? "SUCCESS":"FAILURE"
 
   // Default values
   def colorName = 'RED'
@@ -63,19 +70,22 @@ def slackNotifications(String buildStatus = 'STARTED') {
 
   // Override default values based on build status
   if (buildStatus == 'STARTED') {
-    color = 'YELLOW'
+    colorName = 'YELLOW'
     colorCode = '#FFFF00'
   } else if (buildStatus == 'SUCCESS') {
-    color = 'GREEN'
+    colorName = 'GREEN'
     colorCode = '#00FF00'
   } else {
-    color = 'RED'
+    colorName = 'RED'
     colorCode = '#FF0000'
   }
 
   // Send notifications
-  slackSend (color: colorCode, message: summary)
+  slackSend (color: colorCode, message: summary, channel: "#walmart")
 }
+
+
+
 
 
 
